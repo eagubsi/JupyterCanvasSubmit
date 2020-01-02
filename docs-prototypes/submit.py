@@ -16,16 +16,18 @@ def install(package):
     
 
 try:
-    from dotenv import load_dotenv
-    import dotenv
     import os
     import os.path
     from canvasapi import Canvas
+    from dotenv import load_dotenv
 except:
+    print("Attempting to install canvasapi:")
     install("canvasapi")
+    print("Attempting to install python-dotenv:")
     install("python-dotenv")
+    print("Exiting kernel to force a restart now that installs are complete:")
     os._exit(1) 
-    
+
 #Variables 
 
 API_URL = 'https://canvas.ubc.ca/'
@@ -222,15 +224,22 @@ def submit(course_key:int, assign_key:int)-> None:
             
             allow_errors = button == aebw
             
-            success= submit_assignment_in_temp(files, assign_key, course_key, allow_errors)
-            if not success and not allow_errors:
-                print("ERROR!")
-                print("Your file contains at least 1 error.")
-                print("If you really want to submit this file with the errors please click the \"Submit even if there are errors\" button")  
-                display(aebw)
-            elif not success:
-                print("We are still unable to submit your assignment, please email cpsc103-admin@cs.ubc.ca")
-                
+            try:
+                success = submit_assignment_in_temp(files, assign_key, course_key, allow_errors)
+                if not success and not allow_errors:
+                    print("ERROR!")
+                    print("Your file contains at least 1 error.")
+                    print("If you really want to submit this file with the errors please click" +
+                          " the \"Submit even if there are errors\" button")  
+                    display(aebw)
+                elif not success:
+                    print("We are still unable to submit your assignment, please email cpsc103-admin@cs.ubc.ca")
+            except:
+                print("ERROR! Something went wrong with accessing Canvas for course key " + str(course_key) +
+                      ", assignment key " + str(assign_key) + ", files:")
+                print(files)
+                print("and your token.")
+                print("Please email cpsc103-admin@cs.ubc.ca.")
             
     if token_success:
         display(t,f,b)
@@ -249,4 +258,3 @@ def submit(course_key:int, assign_key:int)-> None:
 __all__ = [
     "submit"
 ]
-
