@@ -9,6 +9,7 @@ import ipywidgets as widgets
 import glob
 import tempfile
 import shutil
+from IPython.display import Javascript
 
 
 def install(package):
@@ -65,7 +66,7 @@ def token_verif(course):
     except:
         print("We can't seem to find your token, if you need help finding it please see:")
         print("https://documentcloud.adobe.com/link/track?uri=urn%3Aaaid%3Ascds%3AUS%3A5a18408c-2102-4dc5-8f50-f8205f9b85bf")
-        print("Please copy and paste your token here now:")
+        print("Please copy and paste your token here and then hit enter:")
         token = input()
         
         #If API key is incorrect in the .env file, we want to delete the 
@@ -83,7 +84,7 @@ def token_verif(course):
             test_token()
             
         except:
-            print("We are still unable to access your course, please email cpsc103-admin@cs.ubc.ca")
+            print("We are still unable to access your course, please submit manually, then bring this up with a TA or instructor.")
         
 def convert_notebook_to_html( file_name: str, notebook_path: str = "", allow_errors: bool = False) -> bool:  
     
@@ -132,7 +133,10 @@ def submit_assignment(files, assign, c, allow_errors = False ):
                 
     
     submission = assignment.submit({ 'submission_type' : 'online_upload', 'file_ids' : submit_these_id})
-    print("check your submission here: " + submission.preview_url)
+    print("Your assignment was submitted succesfully!")
+    print("However unsaved changes may not have been submitted.")
+    print("Please check your submission at this link: " + submission.preview_url)
+    print("It will be easiest to check your submission using the HTML file at that link.")
     return True
     
 def submit_assignment_in_temp(files, assign , c, allow_errors = False ):
@@ -173,7 +177,7 @@ def files_widget():
     all_files = [file for ext in ALLOWED_EXTENSIONS for file in glob.glob('*.' + ext)]
     files = widgets.SelectMultiple(
             options=all_files,
-            value=[],
+            value=[all_files[0]],
             #rows=10,
             description='Files',
             disabled=False)
@@ -206,6 +210,21 @@ def missing_token_widget():
         disabled=False)
     return missing_token
 
+def try_save():
+    """
+    This wasn't saving consistently :(
+    We think it would work if it were on the main thread. 
+    
+    Attempts to save current notebook, 
+    otherwise prints an informative error message
+    """
+    try:
+        Javascript("IPython.notebook.save_notebook()")
+    except:
+        print("""We tried to automatically save your notebook, in case you are submitting it.
+        But something didn't work, please make sure to save your notebook before submitting.
+        We will continue with the files as they are now.""")
+        
 
 def submit(course_key:int, assign_key:int)-> None:
     """
@@ -220,6 +239,7 @@ def submit(course_key:int, assign_key:int)-> None:
     aebw= allow_error_button_widget()
     
     def submit_selected(button):
+            
             files= list(f.value)
             
             allow_errors = button == aebw
@@ -228,18 +248,21 @@ def submit(course_key:int, assign_key:int)-> None:
                 success = submit_assignment_in_temp(files, assign_key, course_key, allow_errors)
                 if not success and not allow_errors:
                     print("ERROR!")
-                    print("Your file contains at least 1 error.")
-                    print("If you really want to submit this file with the errors please click" +
+                    print("We attempted to submit these selected files:")
+                    print(", ".join(files))
+                    print("A jupyter notebook in the submission caused an error.")
+                    print("If you really want to submit this assignment with the errors please click" +
                           " the \"Submit even if there are errors\" button")  
                     display(aebw)
                 elif not success:
-                    print("We are still unable to submit your assignment, please email cpsc103-admin@cs.ubc.ca")
+                    print("We are still unable to submit your assignment, please submit your assignment manually.")
+                    print("Also please bring this issue to the attention of a TA or professor")
             except:
                 print("ERROR! Something went wrong with accessing Canvas for course key " + str(course_key) +
                       ", assignment key " + str(assign_key) + ", files:")
-                print(files)
+                print(", ".join(files))
                 print("and your token.")
-                print("Please email cpsc103-admin@cs.ubc.ca.")
+                print("Please submit manually and ask a member of course staff for help")
             
     if token_success:
         display(t,f,b)
