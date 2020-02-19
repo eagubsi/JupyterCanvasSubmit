@@ -242,6 +242,10 @@ def submit(course_key:int, assign_key:int)-> None:
             
             files= list(f.value)
             
+            if len(files)<1:
+                    print("No files have been selected. Please pick the files you would like to submit and try again.")
+                    return 
+                
             allow_errors = button == aebw
             
             try:
